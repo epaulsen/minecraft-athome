@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  minecraft:
+    image: itzg/minecraft-server
+    ports:
+      - "25565:25565"
+    volumes:
+      - ${MINECRAFT_VOLUME}/mc_data:/data
+    environment:
+      EULA: "TRUE"
+      #CONSOLE: "false"  Enabling this causes container startup failure, not sure why.  Use rcon web to access server instead.
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${RCON_PWD}"
+      RCON_PORT: 28016
+    restart: always    
+  rcon:
+    image: itzg/rcon
+    depends_on: 
+      - "minecraft"
+    ports:
+      - "4326:4326"
+      - "4327:4327"
+    volumes:
+      - ${MINECRAFT_VOLUME}/rcon:/opt/rcon-web-admin/db
+    restart: always
+
+  #Hack to ensure healthy status for containers until I can find free time to configure this with minikube/kubernetes.  
+  autoheal:
+    restart: always
+    image: willfarrell/autoheal
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
